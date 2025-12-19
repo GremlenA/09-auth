@@ -4,6 +4,7 @@ import "./globals.css";
 import Header from "../components/Header/Header";
 import Footer from "../components/Footer/Footer";
 import TanStackProvider from "../components/TanStackProvider/TanStackProvider";
+import AuthNavigation from "@/components/AuthNavigation/AuthNavigation";
 
 
 const roboto = Roboto({
@@ -52,7 +53,7 @@ export default function RootLayout({
 
           
           <div id="modal-root"></div>
-
+         
           <Footer />
         </TanStackProvider>
       </body>

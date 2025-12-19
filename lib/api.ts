@@ -57,4 +57,3 @@ export const deleteNote = async (id: string) => {
   const res = await api.delete<Note>(`/notes/${id}`);
   return res.data;
 };
-
