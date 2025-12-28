@@ -1,6 +1,6 @@
 import { HydrationBoundary, dehydrate } from "@tanstack/react-query";
 import { getQueryClient } from "../../../../getQueryClient";
-import { fetchNotes } from "@/lib/api";
+import { fetchNotes } from "@/lib/api/serverApi";
 import NotesByTagClient from "./NotesByTagClient";
 import type { Metadata } from "next";
 
@@ -16,15 +16,12 @@ export async function generateMetadata({
   const tag = slug?.[0] ?? "all";
   const url = `http://localhost:3000/notes/filter/${tag}`;
 
-  const title = `Tag Filter — ${tag}`;
-  const description = `Notes filtered by tag: ${tag}`;
-
   return {
-    title,
-    description,
+    title: `Tag Filter — ${tag}`,
+    description: `Notes filtered by tag: ${tag}`,
     openGraph: {
-      title,
-      description,
+      title: `Tag Filter — ${tag}`,
+      description: `Notes filtered by tag: ${tag}`,
       url,
       siteName: "NoteHub",
       images: [
