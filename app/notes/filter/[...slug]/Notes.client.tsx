@@ -7,8 +7,9 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import NoteList from "../../../../components/NoteList/NoteList";
 import SearchBox from "../../../../components/SearchBox/SearchBox";
-import { fetchNotes } from "../../../../lib/api";
-import type { FetchNotesResponse } from "../../../../lib/api";
+import { fetchNotes } from "@/lib/api/clientApi";
+import type { FetchNotesResponse } from "@/lib/api/clientApi";
+
 import css from "./NotesPage.module.css";
 
 const Pagination = dynamic(

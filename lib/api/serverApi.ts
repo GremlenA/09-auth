@@ -7,8 +7,8 @@ const serverApi = axios.create({
   baseURL: "http://localhost:3000/api",
 });
 
-function withCookies() {
-  const cookieStore = cookies();
+async function withCookies() {
+  const cookieStore = await cookies();
   return {
     headers: {
       Cookie: cookieStore.toString(),
@@ -23,21 +23,23 @@ export async function fetchNotes(params?: {
   search?: string;
   tag?: string;
 }) {
+  const cookieConfig = await withCookies();
+
   const { data } = await serverApi.get("/notes", {
     params: {
       ...params,
       perPage: 12,
     },
-    ...withCookies(),
+    ...cookieConfig,
   });
+
   return data;
 }
 
 export async function fetchNoteById(id: string) {
-  const { data } = await serverApi.get<Note>(
-    `/notes/${id}`,
-    withCookies()
-  );
+  const cookieConfig = await withCookies();
+
+  const { data } = await serverApi.get<Note>(`/notes/${id}`, cookieConfig);
   return data;
 }
 
@@ -45,10 +47,8 @@ export async function fetchNoteById(id: string) {
 
 export async function checkSession(): Promise<User | null> {
   try {
-    const { data } = await serverApi.get<User | null>(
-      "/auth/session",
-      withCookies()
-    );
+    const cookieConfig = await withCookies();
+    const { data } = await serverApi.get<User | null>("/auth/session", cookieConfig);
     return data;
   } catch {
     return null;
