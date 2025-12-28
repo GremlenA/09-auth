@@ -5,8 +5,8 @@ import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import NoteList from "../../components/NoteList/NoteList";
 import SearchBox from "../../components/SearchBox/SearchBox";
 import { useDebounce } from "use-debounce";
-import { fetchNotes } from "../../lib/api";
-import type { FetchNotesResponse } from "../../lib/api";
+import { fetchNotes } from "@/lib/api/clientApi";
+import type { FetchNotesResponse } from "@/lib/api/clientApi";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import css from "./NotesPage.module.css";
@@ -23,20 +23,15 @@ type NotesClientProps = {
 export default function NotesClient({ tag }: NotesClientProps) {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
-  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const [debouncedSearch] = useDebounce(search, 500);
-
-  
   const normalizedTag = tag === "all" ? undefined : tag;
 
   const queryKey = ["notes", page, debouncedSearch, normalizedTag] as const;
 
   const { data, isLoading, isError, isFetching } = useQuery<
     FetchNotesResponse,
-    Error,
-    FetchNotesResponse,
-    readonly [string, number, string, string?]
+    Error
   >({
     queryKey,
     queryFn: () =>
@@ -74,11 +69,7 @@ export default function NotesClient({ tag }: NotesClientProps) {
       </header>
 
       {notes.length > 0 ? (
-        <NoteList
-          notes={notes}
-          deletingId={deletingId}
-          setDeletingId={setDeletingId}
-        />
+        <NoteList notes={notes} />
       ) : (
         !isFetching && <p className={css.empty}>Not found</p>
       )}

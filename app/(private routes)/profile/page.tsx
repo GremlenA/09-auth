@@ -1,5 +1,5 @@
 import css from "./ProfilePage.module.css";
-
+import Link from "next/link";
 export default function Profile ()
 {
    return(
@@ -7,9 +7,9 @@ export default function Profile ()
   <div className={css.profileCard}>
       <div className={css.header}>
 	     <h1 className={css.formTitle}>Profile Page</h1>
-	     <a href="" className={css.editProfileButton}>
-	       Edit Profile
-	     </a>
+	     <Link href="/profile/edit" className={css.editProfileButton}>
+  Edit Profile
+</Link>
 	   </div>
      <div className={css.avatarWrapper}>
       <img

@@ -1,17 +1,19 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import css from "./SignInPage.module.css";
 import { login } from "@/lib/api/clientApi";
 import { useMutation } from "@tanstack/react-query";
 
 export default function Login() {
   const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
 
   const { mutate, isPending } = useMutation({
     mutationFn: login,
-    onSuccess: (data) => {
-      console.log("Logged in:", data);
+    onSuccess: () => {
+      router.push("/profile");
     },
     onError: () => {
       setError("Invalid email or password");
@@ -19,12 +21,12 @@ export default function Login() {
   });
 
   const handleSubmit = (FormData:FormData) =>{
-      const avatar = FormData.get("avatar") as string;
+     
       const email = FormData.get("email") as string;
       const password = FormData.get("password") as string;
-      const username = FormData.get("username") as string
+   
 
-      mutate({username,email,password,avatar});
+      mutate({email,password});
   };
 
   return (
