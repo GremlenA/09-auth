@@ -2,17 +2,22 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import css from "./SignInPage.module.css";
-import { login } from "@/lib/api/clientApi";
 import { useMutation } from "@tanstack/react-query";
+import css from "./SignInPage.module.css";
 
-export default function Login() {
-  const [error, setError] = useState<string | null>(null);
+import { login } from "@/lib/api/clientApi";
+import { useAuthStore } from "@/lib/store/authStore";
+
+export default function SignInPage() {
   const router = useRouter();
+  const setUser = useAuthStore((s) => s.setUser);
+
+  const [error, setError] = useState<string | null>(null);
 
   const { mutate, isPending } = useMutation({
     mutationFn: login,
-    onSuccess: () => {
+    onSuccess: (user) => {
+      setUser(user); // ✅ записали пользователя в Zustand
       router.push("/profile");
     },
     onError: () => {
@@ -20,21 +25,18 @@ export default function Login() {
     },
   });
 
-  const handleSubmit = (FormData:FormData) =>{
-     
-      const email = FormData.get("email") as string;
-      const password = FormData.get("password") as string;
-   
+  const handleSubmit = (formData: FormData) => {
+    setError(null);
 
-      mutate({email,password});
+    const email = String(formData.get("email") ?? "");
+    const password = String(formData.get("password") ?? "");
+
+    mutate({ email, password });
   };
 
   return (
     <main className={css.mainContent}>
-      <form
-        className={css.form}
-        action={(formData) => handleSubmit(formData)}
-      >
+      <form className={css.form} action={handleSubmit}>
         <h1 className={css.formTitle}>Sign in</h1>
 
         <div className={css.formGroup}>
@@ -60,12 +62,8 @@ export default function Login() {
         </div>
 
         <div className={css.actions}>
-          <button
-            type="submit"
-            disabled={isPending}
-            className={css.submitButton}
-          >
-            Log in
+          <button type="submit" disabled={isPending} className={css.submitButton}>
+            {isPending ? "Logging in..." : "Log in"}
           </button>
         </div>
 

@@ -1,14 +1,14 @@
-import axios from "axios";
 import { cookies } from "next/headers";
+import type { AxiosResponse } from "axios";
 import type { Note } from "@/types/note";
 import type { User } from "@/types/user";
+import { api } from "./api";
 
-const serverApi = axios.create({
-  baseURL: "http://localhost:3000/api",
-});
 
-async function withCookies() {
-  const cookieStore = await cookies();
+
+function withCookies() {
+  const cookieStore = cookies();
+
   return {
     headers: {
       Cookie: cookieStore.toString(),
@@ -16,41 +16,42 @@ async function withCookies() {
   };
 }
 
-/* ========= NOTES ========= */
+
 
 export async function fetchNotes(params?: {
   page?: number;
   search?: string;
   tag?: string;
 }) {
-  const cookieConfig = await withCookies();
-
-  const { data } = await serverApi.get("/notes", {
+  const response = await api.get("/notes", {
     params: {
       ...params,
       perPage: 12,
     },
-    ...cookieConfig,
+    ...withCookies(),
   });
 
-  return data;
+  return response.data;
 }
 
-export async function fetchNoteById(id: string) {
-  const cookieConfig = await withCookies();
+export async function fetchNoteById(
+  id: string
+): Promise<Note> {
+  const response = await api.get<Note>(
+    `/notes/${id}`,
+    withCookies()
+  );
 
-  const { data } = await serverApi.get<Note>(`/notes/${id}`, cookieConfig);
-  return data;
+  return response.data;
 }
 
-/* ========= AUTH ========= */
 
-export async function checkSession(): Promise<User | null> {
-  try {
-    const cookieConfig = await withCookies();
-    const { data } = await serverApi.get<User | null>("/auth/session", cookieConfig);
-    return data;
-  } catch {
-    return null;
-  }
+
+export async function checkSession(): Promise<
+  AxiosResponse<User | null>
+> {
+  return api.get<User | null>(
+    "/auth/session",
+    withCookies()
+  );
 }

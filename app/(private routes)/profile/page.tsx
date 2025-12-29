@@ -1,35 +1,44 @@
-import css from "./ProfilePage.module.css";
+import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
-export default function Profile ()
-{
-   return(
-<main className={css.mainContent}>
-  <div className={css.profileCard}>
-      <div className={css.header}>
-	     <h1 className={css.formTitle}>Profile Page</h1>
-	     <Link href="/profile/edit" className={css.editProfileButton}>
-  Edit Profile
-</Link>
-	   </div>
-     <div className={css.avatarWrapper}>
-      <img
-        src="Avatar"
-        alt="User Avatar"
-        width={120}
-        height={120}
-        className={css.avatar}
-      />
-    </div>
-    <div className={css.profileInfo}>
-      <p>
-        Username: your_username
-      </p>
-      <p>
-        Email: your_email@example.com
-      </p>
-    </div>
-  </div>
-</main>
+import { redirect } from "next/navigation";
 
-   );
+import { checkSession } from "@/lib/api/serverApi";
+import css from "./ProfilePage.module.css";
+
+/* ---------- METADATA ---------- */
+export const metadata: Metadata = {
+  title: "Profile | NoteHub",
+  description: "User profile page",
+};
+
+/* ---------- PAGE ---------- */
+export default async function ProfilePage() {
+  const response = await checkSession();
+  const user = response.data;
+
+  if (!user) {
+    redirect("/sign-in");
+  }
+
+  return (
+    <main className={css.profile}>
+      <div className={css.card}>
+        <Image
+          src={user.avatar}
+          alt={user.username}
+          width={120}
+          height={120}
+          className={css.avatar}
+        />
+
+        <h1 className={css.username}>{user.username}</h1>
+        <p className={css.email}>{user.email}</p>
+
+        <Link href="/profile/edit" className={css.editLink}>
+          Edit profile
+        </Link>
+      </div>
+    </main>
+  );
 }

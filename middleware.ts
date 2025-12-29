@@ -1,28 +1,37 @@
 import { NextRequest, NextResponse } from "next/server";
+import { checkSession } from "@/lib/api/serverApi";
 
 const PUBLIC_ROUTES = ["/sign-in", "/sign-up"];
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  const hasAuthCookie =
-    request.cookies.get("accessToken") ||
-    request.cookies.get("refreshToken");
+  const accessToken = request.cookies.get("accessToken")?.value;
+  const refreshToken = request.cookies.get("refreshToken")?.value;
 
-  const isPublic = PUBLIC_ROUTES.some((route) =>
+  const isPublicRoute = PUBLIC_ROUTES.some((route) =>
     pathname.startsWith(route)
   );
 
-  const isPrivate = pathname.startsWith("/notes") ||
-                    pathname.startsWith("/profile");
+  const isPrivateRoute =
+    pathname.startsWith("/notes") || pathname.startsWith("/profile");
 
-  if (!hasAuthCookie && isPrivate) {
+  
+  if (!accessToken && refreshToken) {
+    const user = await checkSession();
+
+    if (!user && isPrivateRoute) {
+      return NextResponse.redirect(new URL("/sign-in", request.url));
+    }
+  }
+
+  
+  if (!accessToken && isPrivateRoute) {
     return NextResponse.redirect(new URL("/sign-in", request.url));
   }
 
-
-  if (hasAuthCookie && isPublic) {
-    return NextResponse.redirect(new URL("/profile", request.url));
+  if (accessToken && isPublicRoute) {
+    return NextResponse.redirect(new URL("/", request.url));
   }
 
   return NextResponse.next();

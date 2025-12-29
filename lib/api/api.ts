@@ -1,6 +1,9 @@
-import axios from 'axios';
+
+import axios from "axios";
+
+const base = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3000";
 
 export const api = axios.create({
-  baseURL: 'https://notehub-api.goit.study',
+  baseURL: `${base}/api`,
   withCredentials: true,
 });

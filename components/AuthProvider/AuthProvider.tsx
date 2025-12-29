@@ -1,42 +1,85 @@
 "use client";
 
-import { ReactNode, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { checkSession } from "@/lib/api/clientApi";
+import { checkSession, getMe, logout } from "@/lib/api/clientApi";
 import { useAuthStore } from "@/lib/store/authStore";
 
-interface Props {
-  children: ReactNode;
+type Props = {
+  children: React.ReactNode;
+};
+
+const PRIVATE_PREFIXES = ["/notes", "/profile"];
+
+function isPrivateRoute(pathname: string) {
+  return PRIVATE_PREFIXES.some((p) => pathname.startsWith(p));
 }
 
 export default function AuthProvider({ children }: Props) {
   const router = useRouter();
   const pathname = usePathname();
+
+  const setUser = useAuthStore((s) => s.setUser);
+  const clearIsAuthenticated = useAuthStore((s) => s.clearIsAuthenticated);
+
   const [loading, setLoading] = useState(true);
 
-  const { setUser, clearIsAuthenticated } = useAuthStore();
-
   useEffect(() => {
-    async function initAuth() {
-      try {
-        const user = await checkSession();
+    let cancelled = false;
 
-        if (user) {
-          setUser(user);
-        } else if (pathname.startsWith("/profile")) {
+    async function run() {
+      setLoading(true);
+
+      try {
+
+        const session = await checkSession();
+
+        if (!session) {
+         
           clearIsAuthenticated();
-          router.push("/sign-in");
+
+          if (isPrivateRoute(pathname)) {
+            try {
+              await logout(); 
+            } catch {
+              
+            }
+            if (!cancelled) router.replace("/sign-in");
+          }
+          return;
+        }
+
+       
+        const me = await getMe();
+        setUser(me);
+      } catch {
+        clearIsAuthenticated();
+
+        if (isPrivateRoute(pathname)) {
+          try {
+            await logout();
+          } catch {
+          
+          }
+          if (!cancelled) router.replace("/sign-in");
         }
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     }
 
-    initAuth();
+    run();
+
+    return () => {
+      cancelled = true;
+    };
   }, [pathname, router, setUser, clearIsAuthenticated]);
 
-  if (loading) {
-    return <p style={{ textAlign: "center" }}>Loading...</p>;
+  if (loading) return <p>Loading...</p>;
+
+
+  if (isPrivateRoute(pathname) && !useAuthStore.getState().isAuthenticated) {
+    return null;
   }
 
   return <>{children}</>;
