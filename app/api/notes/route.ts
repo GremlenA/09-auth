@@ -8,16 +8,13 @@ import { logErrorResponse } from "../_utils/utils";
 export async function GET(request: Request) {
   try {
     const cookieStore = await cookies();
-
     const url = new URL(request.url);
 
     const page = Number(url.searchParams.get("page") ?? "1") || 1;
-    const perPage = Number(url.searchParams.get("perPage") ?? "12") || 12;
+    const perPage = 12; 
 
     const search = url.searchParams.get("search") ?? "";
     const tagRaw = url.searchParams.get("tag") ?? "";
-
-   
     const tag = tagRaw === "All" ? "" : tagRaw;
 
     const res = await api.get("/notes", {
@@ -49,6 +46,7 @@ export async function GET(request: Request) {
     );
   }
 }
+
 
 export async function POST(request: Request) {
   try {

@@ -55,3 +55,12 @@ export async function checkSession(): Promise<
     withCookies()
   );
 }
+
+export async function fetchCurrentUser(): Promise<User> {
+  const response = await api.get<User>(
+    "/users/me",
+    withCookies()
+  );
+
+  return response.data;
+}

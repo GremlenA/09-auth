@@ -14,7 +14,7 @@ export async function GET(request: NextRequest, { params }: Props) {
     const cookieStore = await cookies();
     const { id } = await params;
 
-    const res = await api.get(`/notes/${id}`, {
+    const res = await api(`/notes/${id}`, {
       headers: {
         Cookie: cookieStore.toString(),
       },
@@ -26,7 +26,7 @@ export async function GET(request: NextRequest, { params }: Props) {
       logErrorResponse(error.response?.data);
       return NextResponse.json(
         { error: error.message, response: error.response?.data },
-        { status: error.status ?? 500 }
+        { status: error.status }
       );
     }
 
@@ -52,7 +52,7 @@ export async function DELETE(request: NextRequest, { params }: Props) {
       logErrorResponse(error.response?.data);
       return NextResponse.json(
         { error: error.message, response: error.response?.data },
-        { status: error.status ?? 500 }
+        { status: error.status }
       );
     }
 
@@ -70,7 +70,6 @@ export async function PATCH(request: NextRequest, { params }: Props) {
     const res = await api.patch(`/notes/${id}`, body, {
       headers: {
         Cookie: cookieStore.toString(),
-        "Content-Type": "application/json",
       },
     });
 
@@ -80,7 +79,7 @@ export async function PATCH(request: NextRequest, { params }: Props) {
       logErrorResponse(error.response?.data);
       return NextResponse.json(
         { error: error.message, response: error.response?.data },
-        { status: error.status ?? 500 }
+        { status: error.status }
       );
     }
 

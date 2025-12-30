@@ -9,33 +9,41 @@ import css from "./EditProfilePage.module.css";
 import { getMe, updateMe } from "@/lib/api/clientApi";
 import type { User } from "@/types/user";
 
+
+import { useAuthStore } from "../../../../lib/store/authStore";
+
 export default function EditProfilePage() {
   const router = useRouter();
+
+
+  const { setUser } = useAuthStore();
+
   const [username, setUsername] = useState("");
 
-  
   const { data: user, isLoading } = useQuery<User>({
     queryKey: ["me"],
     queryFn: getMe,
   });
 
- 
   useEffect(() => {
     if (user) {
       setUsername(user.username);
     }
   }, [user]);
 
-  
   const { mutate, isPending } = useMutation({
     mutationFn: (payload: { username: string }) =>
       updateMe(payload),
-    onSuccess: () => {
+
+    onSuccess: (updatedUser: User) => {
+      
+      setUser(updatedUser);
+
       router.push("/profile");
     },
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     mutate({ username });
   };
