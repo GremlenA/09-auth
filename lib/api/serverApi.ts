@@ -1,13 +1,10 @@
 import { cookies } from "next/headers";
-import type { AxiosResponse } from "axios";
 import type { Note } from "@/types/note";
 import type { User } from "@/types/user";
 import { api } from "./api";
 
-
-
-function withCookies() {
-  const cookieStore = cookies();
+async function withCookies() {
+  const cookieStore = await cookies();
 
   return {
     headers: {
@@ -16,9 +13,9 @@ function withCookies() {
   };
 }
 
+/* ---------- NOTES ---------- */
 
-
-export async function fetchNotes(params?: {
+export async function getNotes(params?: {
   page?: number;
   search?: string;
   tag?: string;
@@ -28,38 +25,50 @@ export async function fetchNotes(params?: {
       ...params,
       perPage: 12,
     },
-    ...withCookies(),
+    ...(await withCookies()),
   });
 
   return response.data;
 }
 
-export async function fetchNoteById(
-  id: string
-): Promise<Note> {
-  const response = await api.get<Note>(
-    `/notes/${id}`,
-    withCookies()
+export async function createNote(data: {
+  title: string;
+  content: string;
+  tag?: string;
+}): Promise<Note> {
+  const response = await api.post<Note>(
+    "/notes",
+    data,
+    await withCookies()
   );
 
   return response.data;
 }
 
-
-
-export async function checkSession(): Promise<
-  AxiosResponse<User | null>
-> {
-  return api.get<User | null>(
-    "/auth/session",
-    withCookies()
+export async function getNoteById(id: string): Promise<Note> {
+  const response = await api.get<Note>(
+    `/notes/${id}`,
+    await withCookies()
   );
+
+  return response.data;
 }
 
-export async function fetchCurrentUser(): Promise<User> {
+/* ---------- AUTH ---------- */
+
+export async function checkSession(): Promise<User | null> {
+  const response = await api.get<User | null>(
+    "/auth/session",
+    await withCookies()
+  );
+
+  return response.data;
+}
+
+export async function getCurrentUser(): Promise<User> {
   const response = await api.get<User>(
     "/users/me",
-    withCookies()
+    await withCookies()
   );
 
   return response.data;

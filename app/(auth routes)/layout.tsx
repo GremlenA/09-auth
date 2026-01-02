@@ -15,27 +15,26 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
   const [loading, setLoading] = useState(true);
 
   const setUser = useAuthStore((s) => s.setUser);
-  const clearIsAuthenticated = useAuthStore((s) => s.clearIsAuthenticated);
+  const clearIsAuthenticated = useAuthStore(
+    (s) => s.clearIsAuthenticated
+  );
 
   useEffect(() => {
     let isMounted = true;
 
+    router.refresh();
+
     (async () => {
       try {
         const session = await checkSession();
-
         if (!isMounted) return;
 
         if (session) {
-         
           const me = await getMe();
           if (!isMounted) return;
 
           setUser(me);
-
-          
           router.push("/");
-          router.refresh();
           return;
         }
 
