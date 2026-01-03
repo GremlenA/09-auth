@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { parse } from "cookie";
-
 import { checkSession } from "@/lib/api/serverApi";
 
 const PUBLIC_ROUTES = ["/sign-in", "/sign-up"];
@@ -9,7 +8,9 @@ const PRIVATE_ROUTES = ["/profile", "/notes"];
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
+
   const cookieStore = await cookies();
+  const response = NextResponse.next();
 
   const accessToken = cookieStore.get("accessToken")?.value;
   const refreshToken = cookieStore.get("refreshToken")?.value;
@@ -24,8 +25,8 @@ export async function proxy(request: NextRequest) {
   
   if (!accessToken && refreshToken) {
     try {
-      const response = await checkSession();
-      const setCookie = response.headers["set-cookie"];
+      const apiResponse = (await checkSession()) as any;
+      const setCookie = apiResponse?.headers?.["set-cookie"];
 
       if (setCookie) {
         const cookiesArray = Array.isArray(setCookie)
@@ -46,33 +47,32 @@ export async function proxy(request: NextRequest) {
           };
 
           if (parsed.accessToken) {
-            cookieStore.set(
-              "accessToken",
-              parsed.accessToken,
-              options
-            );
+            cookieStore.set("accessToken", parsed.accessToken, options);
+            response.cookies.set("accessToken", parsed.accessToken, options);
           }
 
           if (parsed.refreshToken) {
-            cookieStore.set(
-              "refreshToken",
-              parsed.refreshToken,
-              options
-            );
+            cookieStore.set("refreshToken", parsed.refreshToken, options);
+            response.cookies.set("refreshToken", parsed.refreshToken, options);
           }
         }
 
-        return NextResponse.next();
+        return response;
       }
     } catch {
       cookieStore.delete("accessToken");
       cookieStore.delete("refreshToken");
+
+      response.cookies.delete("accessToken");
+      response.cookies.delete("refreshToken");
+
+      return response;
     }
   }
 
-  
+ 
   if (!accessToken && !refreshToken && isPublicRoute) {
-    return NextResponse.next();
+    return response;
   }
 
   
@@ -82,12 +82,12 @@ export async function proxy(request: NextRequest) {
     );
   }
 
-  
+
   if (accessToken && isPublicRoute) {
     return NextResponse.redirect(
       new URL("/", request.url)
     );
   }
 
-  return NextResponse.next();
+  return response;
 }

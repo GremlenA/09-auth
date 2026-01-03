@@ -1,4 +1,5 @@
 import { cookies } from "next/headers";
+import type { AxiosResponse } from "axios";
 import type { Note } from "@/types/note";
 import type { User } from "@/types/user";
 import { api } from "./api";
@@ -13,7 +14,7 @@ async function withCookies() {
   };
 }
 
-/* ---------- NOTES ---------- */
+
 
 export async function getNotes(params?: {
   page?: number;
@@ -54,15 +55,15 @@ export async function getNoteById(id: string): Promise<Note> {
   return response.data;
 }
 
-/* ---------- AUTH ---------- */
 
-export async function checkSession(): Promise<User | null> {
-  const response = await api.get<User | null>(
+
+export async function checkSession(): Promise<
+  AxiosResponse<User | null>
+> {
+  return api.get<User | null>(
     "/auth/session",
     await withCookies()
   );
-
-  return response.data;
 }
 
 export async function getCurrentUser(): Promise<User> {
