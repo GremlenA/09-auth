@@ -3,7 +3,7 @@ import { cookies } from "next/headers";
 import { isAxiosError } from "axios";
 
 import { api } from "../../../../lib/api/api";
-import { logErrorResponse } from "../../../_utils/utils";
+import { logErrorResponse } from "../../_utils/utils";
 
 export async function POST() {
   try {
