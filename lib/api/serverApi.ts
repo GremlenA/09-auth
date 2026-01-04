@@ -4,6 +4,8 @@ import type { Note } from "@/types/note";
 import type { User } from "@/types/user";
 import { api } from "./api";
 
+
+
 async function withCookies() {
   const cookieStore = await cookies();
 
@@ -16,18 +18,58 @@ async function withCookies() {
 
 
 
+export interface FetchNotesParams {
+  page?: number;
+  search?: string;
+  tag?: string;
+}
+
+export interface FetchNotesResponse {
+  notes: Note[];
+  totalPages: number;
+}
+
+export async function fetchNotes(
+  params: FetchNotesParams = {}
+): Promise<FetchNotesResponse> {
+  const response = await api.get<FetchNotesResponse>(
+    "/notes",
+    {
+      params: {
+        ...params,
+        perPage: 12,
+      },
+      ...(await withCookies()),
+    }
+  );
+
+  return response.data;
+}
+
 export async function getNotes(params?: {
   page?: number;
   search?: string;
   tag?: string;
-}) {
-  const response = await api.get("/notes", {
-    params: {
-      ...params,
-      perPage: 12,
-    },
-    ...(await withCookies()),
-  });
+}): Promise<FetchNotesResponse> {
+  const response = await api.get<FetchNotesResponse>(
+    "/notes",
+    {
+      params: {
+        ...params,
+        perPage: 12,
+      },
+      ...(await withCookies()),
+    }
+  );
+
+  return response.data;
+}
+
+export async function getNoteById(id: string): Promise<Note> {
+  const response = await api.get<Note>(
+    `/notes/${id}`,
+    await withCookies()
+  );
 
   return response.data;
 }
@@ -46,15 +88,6 @@ export async function createNote(data: {
   return response.data;
 }
 
-export async function getNoteById(id: string): Promise<Note> {
-  const response = await api.get<Note>(
-    `/notes/${id}`,
-    await withCookies()
-  );
-
-  return response.data;
-}
-
 
 
 export async function checkSession(): Promise<
@@ -65,6 +98,7 @@ export async function checkSession(): Promise<
     await withCookies()
   );
 }
+
 
 export async function getCurrentUser(): Promise<User> {
   const response = await api.get<User>(

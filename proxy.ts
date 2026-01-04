@@ -18,11 +18,12 @@ export async function proxy(request: NextRequest) {
   const isPublicRoute = PUBLIC_ROUTES.some(route =>
     pathname.startsWith(route)
   );
+
   const isPrivateRoute = PRIVATE_ROUTES.some(route =>
     pathname.startsWith(route)
   );
 
-  
+ 
   if (!accessToken && refreshToken) {
     try {
       const apiResponse = await checkSession();
@@ -43,7 +44,7 @@ export async function proxy(request: NextRequest) {
           const parsed = parse(cookieStr);
 
           const options = {
-            path: parsed.Path,
+            path: parsed.Path ?? "/",
             expires: parsed.Expires
               ? new Date(parsed.Expires)
               : undefined,
@@ -63,17 +64,20 @@ export async function proxy(request: NextRequest) {
           }
         }
 
+       
+        if (isPublicRoute) {
+          return NextResponse.redirect(new URL("/", request.url));
+        }
+
         return response;
       }
-    } catch (error) {
-      
+    } catch {
       cookieStore.delete("accessToken");
       cookieStore.delete("refreshToken");
 
       response.cookies.delete("accessToken");
       response.cookies.delete("refreshToken");
 
-   
       if (isPrivateRoute) {
         return NextResponse.redirect(
           new URL("/sign-in", request.url)
@@ -89,7 +93,7 @@ export async function proxy(request: NextRequest) {
     return response;
   }
 
-  
+ 
   if (!accessToken && isPrivateRoute) {
     return NextResponse.redirect(
       new URL("/sign-in", request.url)
@@ -99,7 +103,7 @@ export async function proxy(request: NextRequest) {
   
   if (accessToken && isPublicRoute) {
     return NextResponse.redirect(
-      new URL("/profile", request.url)
+      new URL("/", request.url)
     );
   }
 
