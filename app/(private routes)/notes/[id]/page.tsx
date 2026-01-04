@@ -1,6 +1,6 @@
 import { HydrationBoundary, dehydrate } from "@tanstack/react-query";
 import { getQueryClient } from "../../../../getQueryClient";
-import { fetchNoteById } from "@/lib/api/serverApi";
+import { fetchNoteById } from "@/lib/api/clientApi";
 import NotePreviewClient from "../../../@modal/(.)notes/[id]/NotePreview.client";
 import type { Metadata } from "next";
 

@@ -5,15 +5,15 @@ import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { useDebounce } from "use-debounce";
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import NoteList from "../../../../components/NoteList/NoteList";
-import SearchBox from "../../../../components/SearchBox/SearchBox";
+import NoteList from "../../../../../components/NoteList/NoteList";
+import SearchBox from "../../../../../components//SearchBox/SearchBox";
 import { fetchNotes } from "@/lib/api/clientApi";
 import type { FetchNotesResponse } from "@/lib/api/clientApi";
 
 import css from "./NotesPage.module.css";
 
 const Pagination = dynamic(
-  () => import("../../../../components/Pagination/Pagination"),
+  () => import("../../../../../components/Pagination/Pagination"),
   { ssr: false }
 );
 

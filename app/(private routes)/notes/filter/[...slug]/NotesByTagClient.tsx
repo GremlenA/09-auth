@@ -2,10 +2,10 @@
 
 import { useState } from "react";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
-import NoteList from "../../../../components/NoteList/NoteList";
-import Pagination from "../../../../components/Pagination/Pagination";
-import Modal from "../../../../components/Modal/Modal";
-import NoteForm from "../../../../components/NoteForm/NoteForm";
+import NoteList from "../../../../../components/NoteList/NoteList";
+import Pagination from "../../../../../components/Pagination/Pagination";
+import Modal from "../../../../../components/Modal/Modal";
+import NoteForm from "../../../../../components/NoteForm/NoteForm";
 import { fetchNotes } from "@/lib/api/clientApi";
 import type { FetchNotesResponse } from "@/lib/api/clientApi";
 import css from "./NotesPage.module.css";
