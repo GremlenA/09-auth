@@ -15,23 +15,29 @@ export async function proxy(request: NextRequest) {
   const accessToken = cookieStore.get("accessToken")?.value;
   const refreshToken = cookieStore.get("refreshToken")?.value;
 
-  const isPublicRoute = PUBLIC_ROUTES.some((route) =>
+  const isPublicRoute = PUBLIC_ROUTES.some(route =>
     pathname.startsWith(route)
   );
-  const isPrivateRoute = PRIVATE_ROUTES.some((route) =>
+  const isPrivateRoute = PRIVATE_ROUTES.some(route =>
     pathname.startsWith(route)
   );
 
   
   if (!accessToken && refreshToken) {
     try {
-      const apiResponse = (await checkSession()) as any;
-      const setCookie = apiResponse?.headers?.["set-cookie"];
+      const apiResponse = await checkSession();
 
-      if (setCookie) {
-        const cookiesArray = Array.isArray(setCookie)
-          ? setCookie
-          : [setCookie];
+      const setCookieHeader =
+        apiResponse &&
+        typeof apiResponse === "object" &&
+        "headers" in apiResponse
+          ? (apiResponse as any).headers?.["set-cookie"]
+          : null;
+
+      if (setCookieHeader) {
+        const cookiesArray = Array.isArray(setCookieHeader)
+          ? setCookieHeader
+          : [setCookieHeader];
 
         for (const cookieStr of cookiesArray) {
           const parsed = parse(cookieStr);
@@ -59,18 +65,26 @@ export async function proxy(request: NextRequest) {
 
         return response;
       }
-    } catch {
+    } catch (error) {
+      
       cookieStore.delete("accessToken");
       cookieStore.delete("refreshToken");
 
       response.cookies.delete("accessToken");
       response.cookies.delete("refreshToken");
 
+   
+      if (isPrivateRoute) {
+        return NextResponse.redirect(
+          new URL("/sign-in", request.url)
+        );
+      }
+
       return response;
     }
   }
 
- 
+  
   if (!accessToken && !refreshToken && isPublicRoute) {
     return response;
   }
@@ -82,10 +96,10 @@ export async function proxy(request: NextRequest) {
     );
   }
 
-
+  
   if (accessToken && isPublicRoute) {
     return NextResponse.redirect(
-      new URL("/", request.url)
+      new URL("/profile", request.url)
     );
   }
 

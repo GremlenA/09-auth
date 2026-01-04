@@ -1,57 +1,36 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { api } from '../api';
+import { api } from '../../api';
 import { cookies } from 'next/headers';
+import { parse } from 'cookie';
 import { isAxiosError } from 'axios';
-import { logErrorResponse } from '../_utils/utils';
+import { logErrorResponse } from '../../_utils/utils';
 
-export async function GET(request: NextRequest) {
+export async function POST(req: NextRequest) {
   try {
+    const body = await req.json();
+
+    const apiRes = await api.post('auth/register', body);
+
     const cookieStore = await cookies();
-    const search = request.nextUrl.searchParams.get('search') ?? '';
-    const page = Number(request.nextUrl.searchParams.get('page') ?? 1);
-    const rawTag = request.nextUrl.searchParams.get('tag') ?? '';
-    const tag = rawTag === 'All' ? '' : rawTag;
+    const setCookie = apiRes.headers['set-cookie'];
 
-    const res = await api('/notes', {
-      params: {
-        ...(search !== '' && { search }),
-        page,
-        perPage: 12,
-        ...(tag && { tag }),
-      },
-      headers: {
-        Cookie: cookieStore.toString(),
-      },
-    });
+    if (setCookie) {
+      const cookieArray = Array.isArray(setCookie) ? setCookie : [setCookie];
+      for (const cookieStr of cookieArray) {
+        const parsed = parse(cookieStr);
 
-    return NextResponse.json(res.data, { status: res.status });
-  } catch (error) {
-    if (isAxiosError(error)) {
-      logErrorResponse(error.response?.data);
-      return NextResponse.json(
-        { error: error.message, response: error.response?.data },
-        { status: error.status }
-      );
+        const options = {
+          expires: parsed.Expires ? new Date(parsed.Expires) : undefined,
+          path: parsed.Path,
+          maxAge: Number(parsed['Max-Age']),
+        };
+        if (parsed.accessToken) cookieStore.set('accessToken', parsed.accessToken, options);
+        if (parsed.refreshToken) cookieStore.set('refreshToken', parsed.refreshToken, options);
+      }
+      return NextResponse.json(apiRes.data, { status: apiRes.status });
     }
-    logErrorResponse({ message: (error as Error).message });
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
-  }
-}
 
-export async function POST(request: NextRequest) {
-  try {
-    const cookieStore = await cookies();
-
-    const body = await request.json();
-
-    const res = await api.post('/notes', body, {
-      headers: {
-        Cookie: cookieStore.toString(),
-        'Content-Type': 'application/json',
-      },
-    });
-
-    return NextResponse.json(res.data, { status: res.status });
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   } catch (error) {
     if (isAxiosError(error)) {
       logErrorResponse(error.response?.data);
