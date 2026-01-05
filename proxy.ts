@@ -23,17 +23,20 @@ export async function proxy(request: NextRequest) {
     pathname.startsWith(route)
   );
 
- 
+
+  if (!accessToken && !refreshToken && isPrivateRoute) {
+    return NextResponse.redirect(
+      new URL("/sign-in", request.url)
+    );
+  }
+
+  
   if (!accessToken && refreshToken) {
     try {
       const apiResponse = await checkSession();
 
       const setCookieHeader =
-        apiResponse &&
-        typeof apiResponse === "object" &&
-        "headers" in apiResponse
-          ? (apiResponse as any).headers?.["set-cookie"]
-          : null;
+        apiResponse.headers?.["set-cookie"];
 
       if (setCookieHeader) {
         const cookiesArray = Array.isArray(setCookieHeader)
@@ -54,27 +57,32 @@ export async function proxy(request: NextRequest) {
           };
 
           if (parsed.accessToken) {
-            cookieStore.set("accessToken", parsed.accessToken, options);
-            response.cookies.set("accessToken", parsed.accessToken, options);
+            response.cookies.set(
+              "accessToken",
+              parsed.accessToken,
+              options
+            );
           }
 
           if (parsed.refreshToken) {
-            cookieStore.set("refreshToken", parsed.refreshToken, options);
-            response.cookies.set("refreshToken", parsed.refreshToken, options);
+            response.cookies.set(
+              "refreshToken",
+              parsed.refreshToken,
+              options
+            );
           }
         }
 
-       
+        
         if (isPublicRoute) {
-          return NextResponse.redirect(new URL("/", request.url));
+          return NextResponse.redirect(
+            new URL("/", request.url)
+          );
         }
 
         return response;
       }
     } catch {
-      cookieStore.delete("accessToken");
-      cookieStore.delete("refreshToken");
-
       response.cookies.delete("accessToken");
       response.cookies.delete("refreshToken");
 
@@ -89,18 +97,17 @@ export async function proxy(request: NextRequest) {
   }
 
   
-  if (!accessToken && !refreshToken && isPublicRoute) {
+  if (!accessToken && isPublicRoute) {
     return response;
   }
 
- 
+  
   if (!accessToken && isPrivateRoute) {
     return NextResponse.redirect(
       new URL("/sign-in", request.url)
     );
   }
 
-  
   if (accessToken && isPublicRoute) {
     return NextResponse.redirect(
       new URL("/", request.url)
