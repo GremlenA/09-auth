@@ -1,90 +1,84 @@
 "use client";
 
 import { useState } from "react";
-import { useQuery, keepPreviousData } from "@tanstack/react-query";
-import { useDebounce } from "use-debounce";
-import dynamic from "next/dynamic";
-import Link from "next/link";
-import NoteList from "../../../../../components/NoteList/NoteList";
-import SearchBox from "../../../../../components//SearchBox/SearchBox";
-import { fetchNotes } from "@/lib/api/clientApi";
-import type { FetchNotesResponse } from "@/lib/api/clientApi";
-
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import NoteList from "@/components/NoteList/NoteList";
 import css from "./NotesPage.module.css";
+import { fetchNotes } from "@/lib/api/clientApi";
+import type { Note } from "@/types/note";
+import Pagination from "@/components/Pagination/Pagination";
+// import Modal from "@/components/Modal/Modal";
+import SearchBox from "@/components/SearchBox/SearchBox";
+import { useDebouncedCallback } from "use-debounce";
+// import NoteForm from "@/components/NoteForm/NoteForm";
+// import { useRouter } from "next/navigation";
+import Link from "next/link";
 
-const Pagination = dynamic(
-  () => import("../../../../../components/Pagination/Pagination"),
-  { ssr: false }
-);
+interface NotesProps {
+  tag?: string;
+}
 
-type Props = {
-  tag: string;
-};
+export default function Notes({ tag }: NotesProps) {
+  // const router = useRouter();
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  // const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+  const [searchQuery, setSearchQuery] = useState<string>("");
 
-export default function NotesClient({ tag }: Props) {
-  const [page, setPage] = useState(1);
-  const [search, setSearch] = useState("");
-  const [debouncedSearch] = useDebounce(search, 500);
-
-  const handleSearchChange = (value: string) => {
-    setSearch(value);
-    setPage(1);
-  };
-
-  const normalizedTag = tag === "all" ? undefined : tag;
-
-  const queryKey = ["notes", page, debouncedSearch, tag] as const;
-
-  const { data, isLoading, isError, isFetching } = useQuery<
-    FetchNotesResponse,
-    Error,
-    FetchNotesResponse,
-    readonly [string, number, string, string]
-  >({
-    queryKey,
-    queryFn: () =>
-      fetchNotes({
-        page,
-        search: debouncedSearch,
-        tag: normalizedTag,
-      }),
+  const { data } = useQuery({
+    queryKey: ["notes", currentPage, searchQuery, tag],
+    queryFn: () => fetchNotes(currentPage, searchQuery, tag),
     placeholderData: keepPreviousData,
-    staleTime: 2000,
   });
 
-  const notes = data?.notes ?? [];
-  const totalPages = data?.totalPages ?? 1;
+  const notes = (data?.notes as Note[]) || [];
+  const totalPages = data?.totalPages || 0;
 
-  if (isLoading && !isFetching) return <p>Loading...</p>;
-  if (isError) return <p>Error loading notes</p>;
+  const setPage = (pageNum: number) => {
+    setCurrentPage(pageNum);
+  };
+
+  // const openModal = () => setIsModalOpen(true);
+  // const closeModal = () => setIsModalOpen(false);
+
+  const handleSearchChange = useDebouncedCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      setCurrentPage(1);
+      setSearchQuery(event.target.value);
+    },
+    300,
+  );
+
+  // const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+  //   event.preventDefault();
+  //   router.push("/notes/action/create");
+  // };
 
   return (
     <div className={css.app}>
       <header className={css.toolbar}>
-        <SearchBox value={search} onChange={handleSearchChange} />
-
+        <SearchBox onChange={handleSearchChange} />
         {totalPages > 1 && (
           <Pagination
-            currentPage={page}
+            page={currentPage}
             totalPages={totalPages}
-            onPageChange={(nextPage: number) => setPage(nextPage)}
+            setPage={setPage}
           />
         )}
-
-        <ul>
-          <li>
-            <Link href="/notes/action/create" className={css.button}>
-              Create note +
-            </Link>
-          </li>
-        </ul>
+        {/* <button className={css.button} onClick={handleClick}>
+          Create note +
+        </button> */}
+        <Link href={"/notes/action/create"} className={css.button}>
+          Create note +
+        </Link>
       </header>
 
-      {notes.length > 0 ? (
-        <NoteList notes={notes} />
-      ) : (
-        !isFetching && <p className={css.empty}>Not found</p>
-      )}
+      {notes.length > 0 && <NoteList notes={notes} />}
+
+      {/* {isModalOpen && (
+        <Modal onClose={closeModal}>
+          <NoteForm onClose={closeModal} />
+        </Modal>
+      )} */}
     </div>
   );
 }

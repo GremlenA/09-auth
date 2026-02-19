@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
-import { Roboto } from "next/font/google";
 import "./globals.css";
-
-import Header from "../components/Header/Header";
-import Footer from "../components/Footer/Footer";
-import TanStackProvider from "../components/TanStackProvider/TanStackProvider";
+import Header from "@/components/Header/Header";
+import Footer from "@/components/Footer/Footer";
+import TanStackProvider from "@/components/TanStackProvider/TanStackProvider";
+import "modern-normalize";
+import { Roboto } from "next/font/google";
 import AuthProvider from "@/components/AuthProvider/AuthProvider";
 
 const roboto = Roboto({
@@ -15,30 +15,40 @@ const roboto = Roboto({
 });
 
 export const metadata: Metadata = {
-  title: "NoteHub",
-  description: "NoteHub Next.js App — a simple note manager.",
+  title: "NoteHub App",
+  description: "App to manage and oraganize notes efficiently",
+  openGraph: {
+    title: "NoteHub App",
+    description: "App to manage and oraganize notes efficiently",
+    url: "https://09-auth-liard-omega.vercel.app/",
+    images: [
+      {
+        url: "https://ac.goit.global/fullstack/react/notehub-og-meta.jpg",
+        width: 1200,
+        height: 630,
+        alt: "NoteHub App",
+      },
+    ],
+  },
 };
 
 export default function RootLayout({
   children,
   modal,
-}: {
+}: Readonly<{
   children: React.ReactNode;
   modal: React.ReactNode;
-}) {
+}>) {
   return (
     <html lang="en">
-      <body className={roboto.variable}>
+      <body className={`${roboto.variable}`}>
         <TanStackProvider>
           <AuthProvider>
             <Header />
-
             <main>
               {children}
               {modal}
             </main>
-
-            <div id="modal-root"></div>
             <Footer />
           </AuthProvider>
         </TanStackProvider>

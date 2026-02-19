@@ -1,33 +1,29 @@
-import { HydrationBoundary, dehydrate } from "@tanstack/react-query";
-import { getQueryClient } from "../../../../components/getQueryClient";
-import { getNoteById} from "@/lib/api/serverApi";
-import NotePreviewClient from "../../../@modal/(.)notes/[id]/NotePreview.client";
+import {
+  QueryClient,
+  HydrationBoundary,
+  dehydrate,
+} from "@tanstack/react-query";
+import { fetchServerNoteById } from "@/lib/api/serverApi";
+import NoteDetailsClient from "./NoteDetails.client";
 import type { Metadata } from "next";
 
-type Props = {
-  params: Promise<{ id: string }>;}
+type NoteDetailsProps = {
+  params: Promise<{ id: string }>;
+};
 
-
-export async function generateMetadata(
-  { params }: Props
-): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+}: NoteDetailsProps): Promise<Metadata> {
   const { id } = await params;
-
-  const note = await getNoteById(id);
-
-  const title = `Note — ${note.title}`;
-  const description = note.content.slice(0, 100);
-  const url = `http://localhost:3000/notes/${id}`;
+  const note = await fetchServerNoteById(id);
 
   return {
-    title,
-    description,
+    title: `Note:${note.title}`,
+    description: `${note.content}`,
     openGraph: {
-      title,
-      description,
-      url,
-      siteName: "NoteHub",
-      type: "article",
+      title: `Note:${note.title}`,
+      description: `${note.content}`,
+      url: `https://09-auth-liard-omega.vercel.app/notes/${id}`,
       images: [
         {
           url: "https://ac.goit.global/fullstack/react/notehub-og-meta.jpg",
@@ -40,19 +36,20 @@ export async function generateMetadata(
   };
 }
 
-export default async function NotePage({ params }: Props) {
+const NoteDetails = async ({ params }: NoteDetailsProps) => {
   const { id } = await params;
-
-  const queryClient = getQueryClient();
+  const queryClient = new QueryClient();
 
   await queryClient.prefetchQuery({
-    queryKey: ["note", id],
-    queryFn: () => getNoteById(id),
+    queryKey: ["notes", id],
+    queryFn: () => fetchServerNoteById(id),
   });
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
-      <NotePreviewClient id={id} />
+      <NoteDetailsClient />
     </HydrationBoundary>
   );
-}
+};
+
+export default NoteDetails;

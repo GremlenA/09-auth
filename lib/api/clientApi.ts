@@ -1,82 +1,140 @@
-import { api } from "./api";
-import type { Note, NewNote } from "@/types/note";
-import type { User } from "@/types/user";
+// fetchNotes
+// fetchNoteById
+// createNote
+// deleteNote
+// register
+// login
+// logout
+// checkSession
+// getMe
+// updateMe
+import type { Note } from "@/types/note";
+import { instance } from "./api";
+import { User } from "@/types/user";
 
-/* ========= NOTES ========= */
-
-export interface FetchNotesParams {
-  page?: number;
-  search?: string;
-  tag?: string;
-}
-
-export interface FetchNotesResponse {
+interface FetchNotesResponse {
   notes: Note[];
   totalPages: number;
 }
 
-export async function fetchNotes(
-  params: FetchNotesParams = {}
+interface CreateNoteResponse {
+  note: Note;
+}
+
+interface CreateNoteRequest {
+  title: string;
+  content: string;
+  tag: string;
+}
+
+interface DeleteNoteResponse {
+  note: Note;
+}
+
+interface RegisterRequest {
+  email: string;
+  password: string;
+}
+
+interface LoginRequest {
+  email: string;
+  password: string;
+}
+
+interface CheckSessionResponse {
+  success: boolean;
+}
+
+interface UpdateMeRequest {
+  email: string;
+  username: string;
+}
+
+async function fetchNotes(
+  currentPage: number,
+  searchQuery: string,
+  tag?: string,
 ): Promise<FetchNotesResponse> {
-  const { data } = await api.get<FetchNotesResponse>("/notes", {
-    params: {
-      ...params,
-      perPage: 12,
-    },
+  const params: {
+    page: number;
+    perPage: number;
+    search?: string;
+    tag?: string | undefined;
+  } = {
+    page: currentPage,
+    perPage: 12,
+  };
+
+  if (searchQuery.trim() !== "") {
+    params.search = searchQuery;
+  }
+
+  if (tag && tag !== "all") {
+    params.tag = tag;
+  }
+
+  const { data } = await instance.get<FetchNotesResponse>(`/notes`, {
+    params,
   });
   return data;
 }
 
-export async function fetchNoteById(id: string) {
-  const { data } = await api.get<Note>(`/notes/${id}`);
+async function fetchNoteById(id: string): Promise<Note> {
+  const { data } = await instance.get<Note>(`/notes/${id}`);
   return data;
 }
 
-export async function createNote(payload: NewNote) {
-  const { data } = await api.post<Note>("/notes", payload);
+async function createNote(
+  noteData: CreateNoteRequest,
+): Promise<CreateNoteResponse> {
+  const { data } = await instance.post<CreateNoteResponse>("/notes", noteData);
   return data;
 }
 
-export async function deleteNote(id: string) {
-  const { data } = await api.delete<Note>(`/notes/${id}`);
+async function deleteNote(id: string): Promise<DeleteNoteResponse> {
+  const { data } = await instance.delete<DeleteNoteResponse>(`/notes/${id}`);
   return data;
 }
 
-/* ========= AUTH ========= */
-
-export async function register(payload: {
-  email: string;
-  password: string;
-}): Promise<User> {
-  const { data } = await api.post<User>("/auth/register", payload);
+async function register(registerData: RegisterRequest) {
+  const { data } = await instance.post<User>("/auth/register", registerData);
   return data;
 }
 
-export async function login(payload: {
-  email: string;
-  password: string;
-}): Promise<User> {
-  const { data } = await api.post<User>("/auth/login", payload);
+async function login(loginData: LoginRequest): Promise<User> {
+  const { data } = await instance.post<User>("/auth/login", loginData);
   return data;
 }
 
-export async function logout(): Promise<void> {
-  await api.post("/auth/logout");
+async function logout(): Promise<void> {
+  await instance.post("/auth/logout");
 }
 
-export async function checkSession(): Promise<User | null> {
-  const { data } = await api.get<User | null>("/auth/session");
+async function checkSession(): Promise<CheckSessionResponse> {
+  const { data } = await instance.get<CheckSessionResponse>("/auth/session");
   return data;
 }
 
-/* ========= USER ========= */
-
-export async function getMe(): Promise<User> {
-  const { data } = await api.get<User>("/users/me");
+async function getMe(): Promise<User> {
+  const { data } = await instance.get<User>("/users/me");
   return data;
 }
 
-export async function updateMe(payload: Partial<User>): Promise<User> {
-  const { data } = await api.patch<User>("/users/me", payload);
+async function updateMe(updateMeData: UpdateMeRequest): Promise<User> {
+  const { data } = await instance.patch<User>("/users/me", updateMeData);
   return data;
 }
+
+export {
+  fetchNotes,
+  fetchNoteById,
+  createNote,
+  deleteNote,
+  register,
+  login,
+  logout,
+  checkSession,
+  getMe,
+  updateMe,
+};
+export type { RegisterRequest, LoginRequest, UpdateMeRequest };

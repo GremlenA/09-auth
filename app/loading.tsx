@@ -1,6 +1,5 @@
-
-const Loading  = ()=>
-{
-    return <p>Loading, please wait...</p>;
+function Loader() {
+  return <p>Loading, please wait...</p>;
 }
-    export default Loading
+
+export default Loader;

@@ -1,39 +1,42 @@
 "use client";
 
+import css from "./SignInPage.module.css";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useMutation } from "@tanstack/react-query";
-import css from "./SignInPage.module.css";
-
-import { login } from "@/lib/api/clientApi";
+import { login, LoginRequest } from "@/lib/api/clientApi";
 import { useAuthStore } from "@/lib/store/authStore";
 
-export default function SignInPage() {
+function SignInPage() {
   const router = useRouter();
-  const setUser = useAuthStore((s) => s.setUser);
+  const [error, setError] = useState("");
+  const setUser = useAuthStore((state) => state.setUser);
 
-  const [error, setError] = useState<string | null>(null);
+  const handleSubmit = async (formData: FormData) => {
+    try {
+      const email = formData.get("email");
+      const password = formData.get("password");
 
-  const { mutate, isPending } = useMutation({
-    mutationFn: login,
-    onSuccess: (user) => {
-      setUser(user); // ✅ записали пользователя в Zustand
-      router.push("/profile");
-    },
-    onError: () => {
-      setError("Invalid email or password");
-    },
-  });
+      if (typeof email !== "string" || typeof password !== "string") {
+        throw new Error("Invalid form data");
+      }
 
-  const handleSubmit = (formData: FormData) => {
-    setError(null);
+      const formValues: LoginRequest = {
+        email,
+        password,
+      };
 
-    const email = String(formData.get("email") ?? "");
-    const password = String(formData.get("password") ?? "");
+      const res = await login(formValues);
 
-    mutate({ email, password });
+      if (res) {
+        setUser(res);
+        router.push("/profile");
+      } else {
+        setError("Invalid email or password");
+      }
+    } catch (error) {
+      setError((error as Error).message ?? "Oops... some error");
+    }
   };
-
   return (
     <main className={css.mainContent}>
       <form className={css.form} action={handleSubmit}>
@@ -62,8 +65,8 @@ export default function SignInPage() {
         </div>
 
         <div className={css.actions}>
-          <button type="submit" disabled={isPending} className={css.submitButton}>
-            {isPending ? "Logging in..." : "Log in"}
+          <button type="submit" className={css.submitButton}>
+            Log in
           </button>
         </div>
 
@@ -72,3 +75,5 @@ export default function SignInPage() {
     </main>
   );
 }
+
+export default SignInPage;

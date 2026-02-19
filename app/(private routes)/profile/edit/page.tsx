@@ -1,104 +1,102 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useMutation, useQuery } from "@tanstack/react-query";
-import { useRouter } from "next/navigation";
 import Image from "next/image";
-
 import css from "./EditProfilePage.module.css";
-import { getMe, updateMe } from "@/lib/api/clientApi";
-import type { User } from "@/types/user";
+import { updateMe, UpdateMeRequest } from "@/lib/api/clientApi";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { useAuthStore } from "@/lib/store/authStore";
 
-
-import { useAuthStore } from "../../../../lib/store/authStore";
-
-export default function EditProfilePage() {
+function EditProfilePage() {
   const router = useRouter();
+  const { user } = useAuthStore();
+  const [error, setError] = useState("");
+  const setUser = useAuthStore((state) => state.setUser);
+  const handleSubmit = async (formData: FormData) => {
+    try {
+      const email = formData.get("email");
+      const username = formData.get("username");
 
+      if (typeof email !== "string" || typeof username !== "string") {
+        throw new Error("Invalid form data");
+      }
 
-  const { setUser } = useAuthStore();
+      const formValues: UpdateMeRequest = {
+        email,
+        username,
+      };
 
-  const [username, setUsername] = useState("");
+      const res = await updateMe(formValues);
 
-  const { data: user, isLoading } = useQuery<User>({
-    queryKey: ["me"],
-    queryFn: getMe,
-  });
-
-  useEffect(() => {
-    if (user) {
-      setUsername(user.username);
+      if (res) {
+        setUser(res);
+        router.push("/profile");
+      } else {
+        setError("Invalid email or password");
+      }
+    } catch (error) {
+      setError((error as Error).message ?? "Oops... some error");
     }
-  }, [user]);
-
-  const { mutate, isPending } = useMutation({
-    mutationFn: (payload: { username: string }) =>
-      updateMe(payload),
-
-    onSuccess: (updatedUser: User) => {
-      
-      setUser(updatedUser);
-
-      router.push("/profile");
-    },
-  });
-
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    mutate({ username });
   };
 
-  if (isLoading || !user) {
-    return <p>Loading...</p>;
-  }
-
+  const handleCancel = () => {
+    router.back();
+  };
   return (
     <main className={css.mainContent}>
       <div className={css.profileCard}>
         <h1 className={css.formTitle}>Edit Profile</h1>
 
         <Image
-          src={user.avatar}
+          src={user?.avatar || "Avatar"}
           alt="User Avatar"
           width={120}
           height={120}
           className={css.avatar}
         />
 
-        <form className={css.profileInfo} onSubmit={handleSubmit}>
+        <form className={css.profileInfo} action={handleSubmit}>
           <div className={css.usernameWrapper}>
             <label htmlFor="username">Username:</label>
             <input
+              name="username"
               id="username"
+              defaultValue={user?.username}
               type="text"
               className={css.input}
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              required
             />
           </div>
 
-          <p>Email: {user.email}</p>
+          <div className={css.usernameWrapper}>
+            <label htmlFor="email">Email:</label>
+            <input
+              id="email"
+              name="email"
+              type="email"
+              value={user?.email}
+              readOnly
+              className={css.inputReadonly}
+            />
+          </div>
 
           <div className={css.actions}>
-            <button
-              type="submit"
-              className={css.saveButton}
-              disabled={isPending}
-            >
+            <button type="submit" className={css.saveButton}>
               Save
             </button>
-
             <button
               type="button"
               className={css.cancelButton}
-              onClick={() => router.push("/profile")}
+              onClick={handleCancel}
             >
               Cancel
             </button>
           </div>
+
+          {error && <p className={css.error}>{error}</p>}
         </form>
       </div>
     </main>
   );
 }
+
+export default EditProfilePage;

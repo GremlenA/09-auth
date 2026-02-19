@@ -1,12 +1,11 @@
-"use client"
+"use client";
 
-type ErrorProps=
-{
-    error:Error;
-}
-const Messengerror = ({error}:ErrorProps)=>
-{
-    return <p>Could not fetch the list of notes. {error.message}</p>;
+interface errorMessageProps {
+  error: Error;
 }
 
-export default Messengerror
+function errorMessage({ error }: errorMessageProps) {
+  return <p>Could not fetch the list of notes. {error.message}</p>;
+}
+
+export default errorMessage;
